@@ -100,6 +100,9 @@
             </div>
           </template>
         </el-input>
+        <el-button class="btn" @click="randomEmail"
+        >随机前缀
+        </el-button>
         <el-button class="btn" type="primary" @click="submit" :loading="addLoading"
         >{{ $t('add') }}
         </el-button>
@@ -225,6 +228,18 @@ function getSkeletonRows() {
   if (accounts.length > 20) return skeletonRows = 20
   if (accounts.length === 0) return skeletonRows = 1
   skeletonRows = accounts.length
+}
+
+// 生成随机邮箱前缀（长度不小于系统设置的最小前缀长度）
+function randomEmail() {
+  const chars = 'abcdefghijklmnopqrstuvwxyz0123456789'
+  const min = settingStore.settings.minEmailPrefix || 1
+  const len = Math.max(min, 10)
+  let s = ''
+  for (let i = 0; i < len; i++) {
+    s += chars.charAt(Math.floor(Math.random() * chars.length))
+  }
+  addForm.email = s
 }
 
 function setName() {
