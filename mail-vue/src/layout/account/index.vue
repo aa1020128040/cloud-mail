@@ -2,6 +2,7 @@
   <div class="account-box">
     <div class="head-opt">
       <Icon v-perm="'account:add'" class="icon add" icon="ion:add-outline" width="23" height="23" @click="add"/>
+      <Icon v-perm="'account:add'" class="icon random" icon="ion:shuffle" width="21" height="21" @click="quickAdd" title="随机临时邮箱"/>
       <Icon class="icon refresh" icon="ion:reload" width="18" height="18" @click="refresh"/>
     </div>
     <el-scrollbar class="scrollbar" ref="scrollbarRef">
@@ -240,6 +241,35 @@ function randomEmail() {
     s += chars.charAt(Math.floor(Math.random() * chars.length))
   }
   addForm.email = s
+}
+
+// 一键生成并直接创建一个随机临时邮箱（无需弹窗）
+function quickAdd() {
+  const chars = 'abcdefghijklmnopqrstuvwxyz0123456789'
+  const min = settingStore.settings.minEmailPrefix || 1
+  const len = Math.max(min, 10)
+  let s = ''
+  for (let i = 0; i < len; i++) s += chars.charAt(Math.floor(Math.random() * chars.length))
+  const suffix = addForm.suffix || settingStore.domainList[0]
+  // 若开启了人机验证，则回退到弹窗让用户完成验证
+  if (settingStore.settings.addEmailVerify === 0 || (settingStore.settings.addEmailVerify === 2 && settingStore.settings.addVerifyOpen)) {
+    addForm.email = s
+    add()
+    return
+  }
+  addLoading.value = true
+  accountAdd(s + suffix, '').then(account => {
+    accounts.push(account)
+    settingStore.settings.addVerifyOpen = account.addVerifyOpen
+    ElMessage({message: t('addSuccessMsg'), type: 'success', plain: true})
+    userStore.refreshUserInfo()
+  }).catch(() => {
+    // 直接创建失败则回退到弹窗（已预填随机前缀）
+    addForm.email = s
+    add()
+  }).finally(() => {
+    addLoading.value = false
+  })
 }
 
 function setName() {
